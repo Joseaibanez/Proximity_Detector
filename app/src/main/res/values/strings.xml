@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Proximity_Detector</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="siguiente">Siguiente</string>
+    <string name="usuario_a">Usuario A</string>
+    <string name="usuario_b">Usuario B</string>
+</resources>
