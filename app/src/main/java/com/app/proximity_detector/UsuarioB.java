@@ -27,15 +27,33 @@ import java.io.IOException;
 public class UsuarioB {
 
     Context context;
+    MediaPlayer player;
     private DatabaseReference rtDatabase;
     public UsuarioB(Context context) {
         this.context = context;
         rtDatabase = FirebaseDatabase.getInstance().getReference();
+        Uri ringtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+        player = MediaPlayer.create(context, ringtone);
     }
 
+    public void stopMediaPlayer() {
+        if (player.isPlaying()) {
+            player.stop();
+            try {
+                player.prepare();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public void setIsOutside() {
+        rtDatabase.child("usuarios").child("usuarioB").child("isInside").setValue(false);
+    }
+
+    @SuppressWarnings("deprecation")
     public void checkLocation(GoogleMap map, UsuarioA userA, Circle perim) {
-        Uri ringtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-        MediaPlayer player = MediaPlayer.create(context, ringtone);
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -75,15 +93,9 @@ public class UsuarioB {
                             }
                         }
                         else {
-                            if (player.isPlaying()) {
-                                rtDatabase.child("usuarios").child("usuarioB").child("isInside").setValue(false);
-                                player.stop();
-                                try {
-                                    player.prepare();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
+                            setIsOutside();
+                            //rtDatabase.child("usuarios").child("usuarioB").child("isInside").setValue(false);
+                            stopMediaPlayer();
                         }
                         //FIN POLÍGONO
                     }

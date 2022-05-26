@@ -43,6 +43,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private UsuarioA userA;
     private UsuarioB userB;
     boolean isUserA;
+    MediaPlayer player;
     private DatabaseReference rtDatabase;
     private CancellationToken cToken;
 
@@ -64,6 +65,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             isUserA = extras.getBoolean("userSelected");
         }
 
+        Uri ringtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+        player = MediaPlayer.create(getApplicationContext(), ringtone);
         rtDatabase = FirebaseDatabase.getInstance().getReference();
         getPermisos();
     }
@@ -71,8 +74,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onStop() {
         if(isUserA) {
-            Toast.makeText(getBaseContext(), "SALIENDO DE LA APP", Toast.LENGTH_LONG).show();
+            player.stop();
             rtDatabase.child("usuarios").child("usuarioA").child("isConected").setValue(false);
+        } else {
+            userB.stopMediaPlayer();
+            userB.setIsOutside();
         }
         super.onStop();
     }
@@ -145,9 +151,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-                mMap.setIndoorEnabled(true);// Para la obtencion de ubicacion en interiores
-                Uri ringtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-                MediaPlayer player = MediaPlayer.create(getApplicationContext(), ringtone);
+                mMap.setIndoorEnabled(true);// Para la obtencion de ubicacion en interiores ***************************************************************************************************************NO FUNCIONA
                 if((boolean) snapshot.child("isConected").getValue()) {
                     Double lat = (Double) snapshot.child("lat").getValue();
                     Double lng = (Double) snapshot.child("lng").getValue();
