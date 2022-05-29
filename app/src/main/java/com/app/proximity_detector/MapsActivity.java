@@ -74,7 +74,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onStop() {
         if(isUserA) {
-            player.stop();
+            if (player.isPlaying()) {
+                player.stop();
+                try {
+                    player.prepare();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             rtDatabase.child("usuarios").child("usuarioA").child("isConected").setValue(false);
         } else {
             userB.stopMediaPlayer();
@@ -82,8 +89,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         super.onStop();
     }
-
-
 
     private void getPermisos() {
         int permiso = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
@@ -95,37 +100,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
         }
-    }
-
-    private void subirDatos(double lat, double lng) {
-        rtDatabase.child("usuarios").child("usuarioA").child("lat").setValue(lat);
-        rtDatabase.child("usuarios").child("usuarioA").child("lng").setValue(lng);
-    }
-
-    public void setUserALocation() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        fusedLocationClient.getCurrentLocation(100, cToken)
-                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            Toast.makeText(getBaseContext(), "Ubicación establecida, generando area...", Toast.LENGTH_LONG).show();
-                            subirDatos(location.getLatitude(), location.getLongitude());
-                        } else {
-                            Toast.makeText(getBaseContext(), "No fue posible obtener su ubicación", Toast.LENGTH_LONG).show();
-                        }
-                    }
-                });
     }
 
     /**
@@ -144,7 +118,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         userB = new UsuarioB(this);
         if(isUserA) {
             rtDatabase.child("usuarios").child("usuarioA").child("isConected").setValue(true);
-            setUserALocation();
+            userA.setUserALocation();
         }
         // Generar zonas
         rtDatabase.child("usuarios").child("usuarioA").addValueEventListener(new ValueEventListener() {
@@ -187,7 +161,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     }
                                 }
                             }
-
                             @Override
                             public void onCancelled(@NonNull DatabaseError error) {
 
