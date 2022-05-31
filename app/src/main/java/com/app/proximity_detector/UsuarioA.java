@@ -9,6 +9,11 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+//import android.location.LocationRequest;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -16,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -32,30 +38,41 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 public class UsuarioA {
 
     Circle perimetro;
     Context context;
     ArrayList<LatLng> poligono;
-    private CancellationToken cToken;
     private DatabaseReference rtDatabase;
 
     private FusedLocationProviderClient fusedLocationClient;
+    LocationRequest locRequest;
+    LocationCallback locCallback;
 
     public UsuarioA(Context context) {
         this.context = context;
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+        locRequest = LocationRequest.create();
+        locRequest.setInterval(4000);
+        locRequest.setFastestInterval(2000);
+        locRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(@NonNull LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                if (locationResult != null) {
+                    Location location = locationResult.getLastLocation();
+                    subirDatos(location.getLatitude(), location.getLongitude());
+                } else {
+                    Toast.makeText(context, "No fue posible obtener su ubicación", Toast.LENGTH_LONG).show();
+                }
+            }
+        };
         rtDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
-    private void subirDatos(double lat, double lng) {
-        rtDatabase.child("usuarios").child("usuarioA").child("lat").setValue(lat);
-        rtDatabase.child("usuarios").child("usuarioA").child("lng").setValue(lng);
-    }
-
-    public void setUserALocation() {
+    public void startLocUpdates() {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -66,19 +83,16 @@ public class UsuarioA {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        fusedLocationClient.getCurrentLocation(100, cToken) // Parametro  1 es el nivel de exactitud
-                .addOnSuccessListener( new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            Toast.makeText(context, "Ubicación establecida, generando area...", Toast.LENGTH_LONG).show();
-                            subirDatos(location.getLatitude(), location.getLongitude());
-                        } else {
-                            Toast.makeText(context, "No fue posible obtener su ubicación", Toast.LENGTH_LONG).show();
-                        }
-                    }
-                });
+        fusedLocationClient.requestLocationUpdates(locRequest, locCallback, Looper.getMainLooper());
+    }
+
+    public void stopLocUpdates() {
+        fusedLocationClient.removeLocationUpdates(locCallback);
+    }
+
+    private void subirDatos(double lat, double lng) {
+        rtDatabase.child("usuarios").child("usuarioA").child("lat").setValue(lat);
+        rtDatabase.child("usuarios").child("usuarioA").child("lng").setValue(lng);
     }
 
     public void drawPolygon(GoogleMap mapa, LatLng circle) {
@@ -128,6 +142,8 @@ public class UsuarioA {
         cOptions.fillColor(Color.parseColor("#2271cce7"));
         cOptions.strokeWidth(2);
         mapa.addMarker(new MarkerOptions().position(coordenates).title("Usuario A"));
+        float zoom = 20.0f;
+        mapa.moveCamera(CameraUpdateFactory.newLatLngZoom(coordenates, zoom));
         perimetro = mapa.addCircle(cOptions);
         // Generar polígono
         drawPolygon(mapa, coordenates);

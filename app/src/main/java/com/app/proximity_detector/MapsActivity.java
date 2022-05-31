@@ -47,18 +47,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private DatabaseReference rtDatabase;
     private CancellationToken cToken;
 
-    private FusedLocationProviderClient fusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //FirebaseDatabase.getInstance().setPersistenceEnabled(true);*******************************
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         assert mapFragment != null;
         mapFragment.getMapAsync(this);
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         // Comprobación del usuario selecionado
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -82,9 +81,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     e.printStackTrace();
                 }
             }
+            userA.stopLocUpdates();
             rtDatabase.child("usuarios").child("usuarioA").child("isConected").setValue(false);
         } else {
             userB.stopMediaPlayer();
+            userB.stopLocUpdates();
             userB.setIsOutside();
         }
         super.onStop();
@@ -114,18 +115,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+        mMap.setIndoorEnabled(true);// Para la obtencion de ubicacion en interiores ***************************************************************************************************************NO FUNCIONA
         userA = new UsuarioA(this);
-        userB = new UsuarioB(this);
+        userB = new UsuarioB(this, mMap, userA);
         if(isUserA) {
             rtDatabase.child("usuarios").child("usuarioA").child("isConected").setValue(true);
-            userA.setUserALocation();
+            //userA.setUserALocation();
+            userA.startLocUpdates();
         }
         // Generar zonas
         rtDatabase.child("usuarios").child("usuarioA").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-                mMap.setIndoorEnabled(true);// Para la obtencion de ubicacion en interiores ***************************************************************************************************************NO FUNCIONA
                 if((boolean) snapshot.child("isConected").getValue()) {
                     Double lat = (Double) snapshot.child("lat").getValue();
                     Double lng = (Double) snapshot.child("lng").getValue();
@@ -134,7 +136,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     if(!isUserA) {
                         // Parte del usuario B
                         try {
-                            userB.checkLocation(mMap, userA, userA.getCircle());
+                            userB.startLocUpdates();
                         } catch (AbstractMethodError a) {
                             Toast.makeText(getBaseContext(), "¡Active la ubicación de su dispositivo!", Toast.LENGTH_LONG).show();
                         } catch (NullPointerException n) {
