@@ -48,6 +48,9 @@ public class UsuarioB {
         this.context = context;
         map = gMap;
         userA = usuA;
+        rtDatabase = FirebaseDatabase.getInstance().getReference();
+        Uri ringtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+        player = MediaPlayer.create(context, ringtone);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
         locRequest = LocationRequest.create();
         locRequest.setInterval(4000);
@@ -58,13 +61,10 @@ public class UsuarioB {
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 super.onLocationResult(locationResult);
                 if (locationResult != null) {
-                    //map.clear();
                     Location myLocation = locationResult.getLastLocation();
+                    rtDatabase.child("usuarios").child("usuarioB").child("lat").setValue(myLocation.getLatitude());
+                    rtDatabase.child("usuarios").child("usuarioB").child("lng").setValue(myLocation.getLongitude());
                     LatLng myCoordenates = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
-                    // Se genera el punto de ubicacion
-                    //map.addMarker(new MarkerOptions().position(myCoordenates).title("Usuario A"));
-                    //float zoom = 20.0f;
-                    //map.moveCamera(CameraUpdateFactory.newLatLngZoom(myCoordenates, zoom));
                     // Se obtiene el perimetro generado por el usuario A
                     Circle perim = userA.getCircle();
                     float[] distance = new float[2];
@@ -73,21 +73,17 @@ public class UsuarioB {
                     // Comprobacion area
                     if( distance[0] < perim.getRadius() ){
                         Vibrator vib = (Vibrator)context.getSystemService(Context.VIBRATOR_SERVICE);
-                        //noinspection MissingPermission
                         vib.vibrate(1000);
                     }
-
                     //COMPROBACION POLIGONO
-                    //LatLng myLocat = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
                     if(PolyUtil.containsLocation(myCoordenates, userA.getPoligono(), false)) {
                         if (!player.isPlaying()) {
                             player.start();
-                            rtDatabase.child("usuarios").child("usuarioB").child("isInside").setValue(true);
                         }
+                        rtDatabase.child("usuarios").child("usuarioB").child("isInside").setValue(true);
                     }
                     else {
                         setIsOutside();
-                        //rtDatabase.child("usuarios").child("usuarioB").child("isInside").setValue(false);
                         stopMediaPlayer();
                     }
                     //FIN POLÍGONO
@@ -96,11 +92,9 @@ public class UsuarioB {
                 }
             }
         };
-        rtDatabase = FirebaseDatabase.getInstance().getReference();
-        Uri ringtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-        player = MediaPlayer.create(context, ringtone);
     }
 
+    // Comienza a actualizar la ubicación del usuario
     public void startLocUpdates() {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -116,10 +110,14 @@ public class UsuarioB {
         map.setMyLocationEnabled(true);
     }
 
+    // Detiene las actualizaciones de ubicación
     public void stopLocUpdates() {
-        fusedLocationClient.removeLocationUpdates(locCallback);
+        if (fusedLocationClient != null) {
+            fusedLocationClient.removeLocationUpdates(locCallback);
+        }
     }
 
+    // Detiene el reproductor de sonido
     public void stopMediaPlayer() {
         if (player.isPlaying()) {
             player.stop();
@@ -132,8 +130,12 @@ public class UsuarioB {
 
     }
 
+    public  void closeDatabase() {
+        rtDatabase.goOffline();
+    }
+
+    // Indica en la base de datos que el Usuario B se encuentra fuera del polígono del Usuario A
     public void setIsOutside() {
         rtDatabase.child("usuarios").child("usuarioB").child("isInside").setValue(false);
     }
-
 }

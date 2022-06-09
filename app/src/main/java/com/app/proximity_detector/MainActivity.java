@@ -36,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent siguiente = new Intent(MainActivity.this, MapsActivity.class);
                 siguiente.putExtra("userSelected",true);
+                siguiente.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        | Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(siguiente);
             }
         });
@@ -45,10 +47,13 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent siguiente = new Intent(MainActivity.this, MapsActivity.class);
                 siguiente.putExtra("userSelected",false);
+                siguiente.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        | Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(siguiente);
             }
         });
     }
+
 
 
 

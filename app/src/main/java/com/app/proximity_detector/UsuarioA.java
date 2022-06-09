@@ -13,6 +13,9 @@ import android.location.LocationManager;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 
+import android.media.MediaPlayer;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
@@ -28,6 +31,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
@@ -36,6 +40,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +49,10 @@ public class UsuarioA {
     Circle perimetro;
     Context context;
     ArrayList<LatLng> poligono;
+    MediaPlayer player;
     private DatabaseReference rtDatabase;
+    Marker userAMark;
+    Polygon polygon1;
 
     private FusedLocationProviderClient fusedLocationClient;
     LocationRequest locRequest;
@@ -52,6 +60,9 @@ public class UsuarioA {
 
     public UsuarioA(Context context) {
         this.context = context;
+        rtDatabase = FirebaseDatabase.getInstance().getReference();
+        Uri ringtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+        player = MediaPlayer.create(context, ringtone);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
         locRequest = LocationRequest.create();
         locRequest.setInterval(4000);
@@ -69,7 +80,6 @@ public class UsuarioA {
                 }
             }
         };
-        rtDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
     public void startLocUpdates() {
@@ -95,6 +105,24 @@ public class UsuarioA {
         rtDatabase.child("usuarios").child("usuarioA").child("lng").setValue(lng);
     }
 
+    public void startMediaPlayer() {
+        if (!player.isPlaying()) {
+            player.start();
+        }
+    }
+
+    public void stopMediaPlayer() {
+        if (player.isPlaying()) {
+            player.stop();
+            try {
+                player.prepare();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
     public void drawPolygon(GoogleMap mapa, LatLng circle) {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -116,7 +144,7 @@ public class UsuarioA {
         polygonList.add(point3);
         polygonList.add(point2);
         polygonList.add(point4);
-        Polygon polygon1 = mapa.addPolygon(new PolygonOptions()
+        polygon1 = mapa.addPolygon(new PolygonOptions()
                 .clickable(false)
                 .add(
                         point1,
@@ -134,18 +162,34 @@ public class UsuarioA {
     }
 
     public void drawCircle(GoogleMap mapa, LatLng coordenates, int radio) {
-        mapa.clear();
+        clearMap(mapa);
         CircleOptions cOptions = new CircleOptions();
         cOptions.center(coordenates);
         cOptions.radius(radio);
         cOptions.strokeColor(Color.BLACK);
         cOptions.fillColor(Color.parseColor("#2271cce7"));
         cOptions.strokeWidth(2);
-        mapa.addMarker(new MarkerOptions().position(coordenates).title("Usuario A"));
+        userAMark = mapa.addMarker(new MarkerOptions().position(coordenates).title("Usuario A"));
         float zoom = 20.0f;
         mapa.moveCamera(CameraUpdateFactory.newLatLngZoom(coordenates, zoom));
         perimetro = mapa.addCircle(cOptions);
         // Generar polígono
         drawPolygon(mapa, coordenates);
+    }
+
+    public  void closeDatabase() {
+        rtDatabase.goOffline();
+    }
+
+    public void clearMap(GoogleMap map) {
+        if(userAMark != null) {
+            userAMark.remove();
+        }
+        if(perimetro!=null){
+            perimetro.remove();
+        }
+        if (polygon1 !=null) {
+            polygon1.remove();
+        }
     }
 }

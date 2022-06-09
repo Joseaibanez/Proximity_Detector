@@ -4,4 +4,6 @@
     <string name="siguiente">Siguiente</string>
     <string name="usuario_a">Usuario A</string>
     <string name="usuario_b">Usuario B</string>
+    <string name="appTitle">Detector de Proximidad</string>
+    <string name="iconImage">TODO</string>
 </resources>
