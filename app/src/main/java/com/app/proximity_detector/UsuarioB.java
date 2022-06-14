@@ -107,7 +107,6 @@ public class UsuarioB {
             return;
         }
         fusedLocationClient.requestLocationUpdates(locRequest, locCallback, Looper.getMainLooper());
-        map.setMyLocationEnabled(true);
     }
 
     // Detiene las actualizaciones de ubicación

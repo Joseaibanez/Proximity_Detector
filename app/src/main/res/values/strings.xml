@@ -6,4 +6,5 @@
     <string name="usuario_b">Usuario B</string>
     <string name="appTitle">Detector de Proximidad</string>
     <string name="iconImage">TODO</string>
+    <string name="zoomButtonText">Zoom</string>
 </resources>

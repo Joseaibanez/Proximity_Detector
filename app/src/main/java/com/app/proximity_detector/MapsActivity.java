@@ -15,6 +15,8 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -53,6 +55,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     ValueEventListener valueListenerDataA;
     ValueEventListener valueListenerDataB;
     Marker userBMark;
+    Button zoomButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,8 +73,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             isUserA = extras.getBoolean("userSelected");
         }
         rtDatabase = FirebaseDatabase.getInstance().getReference();
-        //rtDatabase.keepSynced(true);
         getPermisos();
+        // Boton para hacer zoom en la localizacion del usuario
+        zoomButton = (Button) findViewById(R.id.zoomButton);
+        zoomButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                zoom();
+            }
+        });
+        // Fin boton zoom
 
         // Lector de datos para el usuario A
         valueListenerDataA = new ValueEventListener() {
@@ -97,9 +108,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         valueListenerDataB = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                System.out.println("*********************************************************************************************************************************************");
-                System.out.println("LECTOR DE DATOS B CORRIENDO");
-                System.out.println("*********************************************************************************************************************************************");
                 // Comprobacion del poligono para el usuario B
                 if ((boolean) snapshot.child("isConected").getValue()) {
                     LatLng userBLocation = new LatLng((Double) snapshot.child("lat").getValue(),(Double) snapshot.child("lng").getValue());
@@ -124,6 +132,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         };
 
+    }
+
+    private void zoom() {
+        float zoom = 20.0f;
+        if (isUserA) {
+            rtDatabase.child("usuarios").child("usuarioA").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    Double lat = (Double) snapshot.child("lat").getValue();
+                    Double lng = (Double) snapshot.child("lng").getValue();
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lng), zoom));
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
+
+        } else {
+            rtDatabase.child("usuarios").child("usuarioB").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    Double lat = (Double) snapshot.child("lat").getValue();
+                    Double lng = (Double) snapshot.child("lng").getValue();
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lng), zoom));
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
+        }
     }
 
     private void checkIsInsidePoligon() {
@@ -155,9 +197,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             userA.clearMap(mMap);
             if(userBMark != null) {
                 userBMark.remove();
-                Toast.makeText(getBaseContext(), "SE HA ELIMINADO EL MARKER B", Toast.LENGTH_LONG).show();
             }
-            //rtDatabase.keepSynced(true);
             userA.closeDatabase();
         } else {
             userB.stopMediaPlayer();
@@ -165,21 +205,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             userB.setIsOutside();
             rtDatabase.child("usuarios").child("usuarioB").child("isConected").setValue(false);
             rtDatabase.removeEventListener(valueListenerDataB);
-            //rtDatabase.removeEventListener(getUserBConnectionListener);
             userB.closeDatabase();
-        }
-        if(userBMark != null) {
-            userBMark.remove();
-            Toast.makeText(getBaseContext(), "SE HA ELIMINADO EL MARKER B", Toast.LENGTH_LONG).show();
+            if(userBMark != null) {
+                userBMark.remove();
+            }
         }
         rtDatabase.removeEventListener(valueListenerDataA);
         if (valueListenerDataB != null) {
             rtDatabase.removeEventListener(valueListenerDataB);
         }
-        //rtDatabase.removeEventListener(userAConnectionListener);
-        //rtDatabase.removeEventListener(getUserBConnectionListener);
         mMap.clear();
-        Toast.makeText(getBaseContext(), "SE HA RESETEADO EL MAPA", Toast.LENGTH_LONG).show();
     }
 
     @Override

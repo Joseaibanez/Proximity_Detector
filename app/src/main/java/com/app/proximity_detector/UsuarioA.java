@@ -46,8 +46,8 @@ import java.util.List;
 
 public class UsuarioA {
 
-    Circle perimetro;
     Context context;
+    Circle perimetro;
     ArrayList<LatLng> poligono;
     MediaPlayer player;
     private DatabaseReference rtDatabase;
@@ -170,8 +170,6 @@ public class UsuarioA {
         cOptions.fillColor(Color.parseColor("#2271cce7"));
         cOptions.strokeWidth(2);
         userAMark = mapa.addMarker(new MarkerOptions().position(coordenates).title("Usuario A"));
-        float zoom = 20.0f;
-        mapa.moveCamera(CameraUpdateFactory.newLatLngZoom(coordenates, zoom));
         perimetro = mapa.addCircle(cOptions);
         // Generar polígono
         drawPolygon(mapa, coordenates);
