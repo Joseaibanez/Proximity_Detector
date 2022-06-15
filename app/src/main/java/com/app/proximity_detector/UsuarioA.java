@@ -37,8 +37,11 @@ import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -123,7 +126,7 @@ public class UsuarioA {
     }
 
 
-    public void drawPolygon(GoogleMap mapa, LatLng circle) {
+    public void drawPolygon(GoogleMap mapa, LatLng circle, long radio) {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -136,10 +139,10 @@ public class UsuarioA {
         }
         mapa.getUiSettings().setMyLocationButtonEnabled(true);
         ArrayList<LatLng> polygonList = new ArrayList<>();
-        LatLng point1 = new LatLng(circle.latitude, circle.longitude-0.0001);
-        LatLng point2 = new LatLng(circle.latitude, circle.longitude+0.0001);
-        LatLng point3 = new LatLng(circle.latitude+0.0001, circle.longitude);
-        LatLng point4 = new LatLng(circle.latitude-0.0001, circle.longitude);
+        LatLng point1 = new LatLng(circle.latitude, circle.longitude-radio*0.000005);
+        LatLng point2 = new LatLng(circle.latitude, circle.longitude+radio*0.000005);
+        LatLng point3 = new LatLng(circle.latitude+radio*0.000005, circle.longitude);
+        LatLng point4 = new LatLng(circle.latitude-radio*0.000005, circle.longitude);
         polygonList.add(point1);
         polygonList.add(point3);
         polygonList.add(point2);
@@ -161,18 +164,30 @@ public class UsuarioA {
         return perimetro;
     }
 
-    public void drawCircle(GoogleMap mapa, LatLng coordenates, int radio) {
-        clearMap(mapa);
-        CircleOptions cOptions = new CircleOptions();
-        cOptions.center(coordenates);
-        cOptions.radius(radio);
-        cOptions.strokeColor(Color.BLACK);
-        cOptions.fillColor(Color.parseColor("#2271cce7"));
-        cOptions.strokeWidth(2);
-        userAMark = mapa.addMarker(new MarkerOptions().position(coordenates).title("Usuario A"));
-        perimetro = mapa.addCircle(cOptions);
-        // Generar polígono
-        drawPolygon(mapa, coordenates);
+    public void drawCircle(GoogleMap mapa, LatLng coordenates) {
+        rtDatabase.child("usuarios").child("usuarioA").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                clearMap(mapa);
+                Long radio = (Long) snapshot.child("radio").getValue();
+                CircleOptions cOptions = new CircleOptions();
+                cOptions.center(coordenates);
+                cOptions.radius(radio);
+                cOptions.strokeColor(Color.BLACK);
+                cOptions.fillColor(Color.parseColor("#2271cce7"));
+                cOptions.strokeWidth(2);
+                userAMark = mapa.addMarker(new MarkerOptions().position(coordenates).title("Usuario A"));
+                perimetro = mapa.addCircle(cOptions);
+                // Generar polígono
+                drawPolygon(mapa, coordenates, radio);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
     }
 
     public  void closeDatabase() {

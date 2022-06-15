@@ -7,4 +7,10 @@
     <string name="appTitle">Detector de Proximidad</string>
     <string name="iconImage">TODO</string>
     <string name="zoomButtonText">Zoom</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="chooserButton1">500mt</string>
+    <string name="chooser2">1KM</string>
+    <string name="chooser20">20mt</string>
+    <string name="checkconn">CheckConn</string>
 </resources>

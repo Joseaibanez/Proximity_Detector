@@ -1,48 +1,35 @@
 package com.app.proximity_detector;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
-import android.content.Intent;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.media.MediaPlayer;
-import android.media.RingtoneManager;
-import android.net.Uri;
-import android.os.Build;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.CancellationToken;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -56,11 +43,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     ValueEventListener valueListenerDataB;
     Marker userBMark;
     Button zoomButton;
+    Button areaChooser500;
+    Button areaChooser1;
+    Button areaChooser20;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //FirebaseDatabase.getInstance().setPersistenceEnabled(true);***********************************************************************************************
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -72,7 +61,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (extras != null) {
             isUserA = extras.getBoolean("userSelected");
         }
+
+        // Inicialización de la base de datos
         rtDatabase = FirebaseDatabase.getInstance().getReference();
+        if (hasConnection()) {
+            SharedPreferences sPref = getSharedPreferences("userAConnection", Context.MODE_PRIVATE);
+            boolean connA = sPref.getBoolean("userAConn", true);
+            boolean connB = sPref.getBoolean("userBConn", false);
+            rtDatabase.child("usuarios").child("usuarioA").child("isConected").setValue(connA);
+            rtDatabase.child("usuarios").child("usuarioB").child("isConected").setValue(connB);
+
+            SharedPreferences.Editor editor = sPref.edit();
+            editor.clear();
+            editor.apply();
+
+        }
         getPermisos();
         // Boton para hacer zoom en la localizacion del usuario
         zoomButton = (Button) findViewById(R.id.zoomButton);
@@ -83,6 +86,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
         // Fin boton zoom
+        // Botones para cambiar el tamaño del area
+        areaChooser500 = (Button) findViewById(R.id.areaChooser500);
+        areaChooser500.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rtDatabase.child("usuarios").child("usuarioA").child("radio").setValue(500);
+                changeArea();
+            }
+        });
+        areaChooser1 = (Button) findViewById(R.id.areaChooser1);
+        areaChooser1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rtDatabase.child("usuarios").child("usuarioA").child("radio").setValue(1000);
+                changeArea();
+            }
+        });
+        areaChooser20 = (Button) findViewById(R.id.areaChooser20);
+        areaChooser20.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rtDatabase.child("usuarios").child("usuarioA").child("radio").setValue(20);
+                changeArea();
+            }
+        });
+
+        if (!isUserA) {
+            areaChooser1.setVisibility(View.INVISIBLE);
+            areaChooser500.setVisibility(View.INVISIBLE);
+            areaChooser20.setVisibility(View.INVISIBLE);
+        }
+        // Fin cambio de area
 
         // Lector de datos para el usuario A
         valueListenerDataA = new ValueEventListener() {
@@ -91,9 +126,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if(!(boolean) snapshot.child("isConected").getValue()) {
                     finish();
                 }
-                Double lat = (Double) snapshot.child("lat").getValue();
-                Double lng = (Double) snapshot.child("lng").getValue();
-                userA.drawCircle(mMap, new LatLng(lat, lng), 20);
+                if (!hasConnection()) {
+                    Toast.makeText(getApplicationContext(), "Se ha perdido la conexión, inténtelo mas tarde", Toast.LENGTH_LONG).show();
+                    finish();
+                }
+                changeArea();
                 // Comprobacion del poligono para el usuario A
                 checkIsInsidePoligon();
                 // FIN
@@ -108,6 +145,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         valueListenerDataB = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!hasConnection()) {
+                    Toast.makeText(getApplicationContext(), "Se ha perdido la conexión, inténtelo mas tarde", Toast.LENGTH_LONG).show();
+                    finish();
+                }
                 // Comprobacion del poligono para el usuario B
                 if ((boolean) snapshot.child("isConected").getValue()) {
                     LatLng userBLocation = new LatLng((Double) snapshot.child("lat").getValue(),(Double) snapshot.child("lng").getValue());
@@ -132,6 +173,37 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         };
 
+    }
+    // Fin onCreate
+
+    private boolean hasConnection() {
+        boolean resultado = false;
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = connManager.getActiveNetworkInfo();
+        if(netInfo != null) {
+            if (netInfo.isConnected()) {
+                resultado = true;
+            }
+        }
+        return resultado;
+    }
+
+
+    // Método para actualizar el area Del usuario A
+    private void changeArea() {
+        rtDatabase.child("usuarios").child("usuarioA").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Double lat = (Double) snapshot.child("lat").getValue();
+                Double lng = (Double) snapshot.child("lng").getValue();
+                userA.drawCircle(mMap, new LatLng(lat, lng));
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     private void zoom() {
@@ -188,11 +260,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
-
+    // Método para resetear la actividad de mapa
+    // elimina marcadores, cierra conexiones a la base
+    // y detiene los listeners para datos de los usuarios
     private void clearApp() {
         if(isUserA) {
             userA.stopMediaPlayer();
-            rtDatabase.child("usuarios").child("usuarioA").child("isConected").setValue(false);
+            if(hasConnection()) {
+                rtDatabase.child("usuarios").child("usuarioA").child("isConected").setValue(false);
+            } else {
+                SharedPreferences sPref = getSharedPreferences("userAConnection", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sPref.edit();
+                editor.putBoolean("userAConn", false);
+                editor.apply();
+            }
             userA.stopLocUpdates();
             userA.clearMap(mMap);
             if(userBMark != null) {
@@ -203,7 +284,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             userB.stopMediaPlayer();
             userB.stopLocUpdates();
             userB.setIsOutside();
-            rtDatabase.child("usuarios").child("usuarioB").child("isConected").setValue(false);
+            if(hasConnection()) {
+                rtDatabase.child("usuarios").child("usuarioB").child("isConected").setValue(false);
+            } else {
+                SharedPreferences sPref = getSharedPreferences("userBConnection", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sPref.edit();
+                editor.putBoolean("userBConn", false);
+                editor.apply();
+            }
             rtDatabase.removeEventListener(valueListenerDataB);
             userB.closeDatabase();
             if(userBMark != null) {
@@ -258,13 +346,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
+        if(!hasConnection()) {
+            Toast.makeText(this, "No hay ninguna conexión disponible", Toast.LENGTH_LONG).show();
+            finish();
+        }
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         mMap.setIndoorEnabled(true);// Para la obtencion de ubicacion en interiores ***************************************************************************************************************NO FUNCIONA
         userA = new UsuarioA(this);
         userB = new UsuarioB(this, mMap, userA);
         if(isUserA) {
-            Toast.makeText(this, "¡ES EL USUARIO A!", Toast.LENGTH_LONG).show();
             rtDatabase.child("usuarios").child("usuarioA").child("isConected").setValue(true);
             userA.startLocUpdates();
         }
@@ -280,7 +371,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         rtDatabase.child("usuarios").child("usuarioB").child("isConected").setValue(true);
                         userB.startLocUpdates();
                     }
-                    //rtDatabase.child("usuarios").child("usuarioB").addValueEventListener(getUserBConnectionListener);
                     rtDatabase.child("usuarios").child("usuarioB").addValueEventListener(valueListenerDataB);
 
                 } else {
