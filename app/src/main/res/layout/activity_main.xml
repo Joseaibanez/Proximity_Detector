@@ -29,8 +29,8 @@
         android:layout_marginStart="16dp"
         android:layout_marginBottom="80dp"
         android:backgroundTint="@color/gray"
-        android:text="@string/usuario_a"
         android:textColor="@color/black"
+        android:text="@string/usuario_a"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         tools:targetApi="lollipop" />

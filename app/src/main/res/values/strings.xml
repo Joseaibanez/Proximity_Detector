@@ -13,4 +13,16 @@
     <string name="chooser2">1KM</string>
     <string name="chooser20">20mt</string>
     <string name="checkconn">CheckConn</string>
+    <string name="loginButtonText">Login</string>
+    <string name="registerButton">Registrarse</string>
+    <string name="registrar_usuarioBoton">Registrar Usuario</string>
+    <string name="usernameReg">Nombre de usuario</string>
+    <string name="passwdReg">Contraseña</string>
+    <string name="usernameLogin">Nombre de usuario</string>
+    <string name="loginActivityButtonText">Iniciar Sesión</string>
+    <string name="passwordLoginText">Contraseña</string>
+    <string name="toRegisterButton">Registrarse</string>
+    <string name="usuario_bButton">Usuario B</string>
+    <string name="identificadorUsuarioB">Identificador</string>
+    <string name="idLoginText">Id</string>
 </resources>

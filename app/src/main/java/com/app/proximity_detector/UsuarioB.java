@@ -22,13 +22,19 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.maps.android.PolyUtil;
 
 import java.io.IOException;
@@ -42,29 +48,44 @@ public class UsuarioB {
     LocationCallback locCallback;
     GoogleMap map;
     UsuarioA userA;
+    String id;
+    Boolean iniciado;
     private DatabaseReference rtDatabase;
+    Marker userBMarker;
 
-    public UsuarioB(Context context, GoogleMap gMap, UsuarioA usuA) {
+    public UsuarioB(Context context, GoogleMap gMap, UsuarioA usuA, String idUser) {
         this.context = context;
+        iniciado = false;
         map = gMap;
         userA = usuA;
+        id = idUser;
         rtDatabase = FirebaseDatabase.getInstance().getReference();
         Uri ringtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
         player = MediaPlayer.create(context, ringtone);
+
+        // obtencion de ubicacion actual
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
         locRequest = LocationRequest.create();
         locRequest.setInterval(4000);
         locRequest.setFastestInterval(2000);
-        locRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locRequest.setPriority(Priority.PRIORITY_HIGH_ACCURACY );
         locCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 super.onLocationResult(locationResult);
                 if (locationResult != null) {
                     Location myLocation = locationResult.getLastLocation();
-                    rtDatabase.child("usuarios").child("usuarioB").child("lat").setValue(myLocation.getLatitude());
-                    rtDatabase.child("usuarios").child("usuarioB").child("lng").setValue(myLocation.getLongitude());
+                    rtDatabase.child("usuarios").child("usuariosB").child(id).child("lat").setValue(myLocation.getLatitude());
+                    rtDatabase.child("usuarios").child("usuariosB").child(id).child("lng").setValue(myLocation.getLongitude());
+                    System.out.println("******************************************************************************************************");
+                    System.out.println("USUARIO B CORRIENDO");
+                    System.out.println("******************************************************************************************************");
                     LatLng myCoordenates = new LatLng(myLocation.getLatitude(), myLocation.getLongitude());
+                    if (userBMarker != null) {
+                        userBMarker.remove();
+                    }
+                    userBMarker = map.addMarker(new MarkerOptions().position(myCoordenates).title("Usuario B").
+                            icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
                     // Se obtiene el perimetro generado por el usuario A
                     Circle perim = userA.getCircle();
                     float[] distance = new float[2];
@@ -80,7 +101,7 @@ public class UsuarioB {
                         if (!player.isPlaying()) {
                             player.start();
                         }
-                        rtDatabase.child("usuarios").child("usuarioB").child("isInside").setValue(true);
+                        rtDatabase.child("usuarios").child("usuariosB").child(id).child("isInside").setValue(true);
                     }
                     else {
                         setIsOutside();
@@ -135,6 +156,23 @@ public class UsuarioB {
 
     // Indica en la base de datos que el Usuario B se encuentra fuera del polígono del Usuario A
     public void setIsOutside() {
-        rtDatabase.child("usuarios").child("usuarioB").child("isInside").setValue(false);
+        rtDatabase.child("usuarios").child("usuariosB").child(id).child("isInside").setValue(false);
+    }
+
+
+    public String getId() {
+        return id;
+    }
+
+    public Marker getUserBMarker() {
+        return userBMarker;
+    }
+
+    public void setIniciado(boolean status) {
+        iniciado = status;
+    }
+
+    public  boolean getIniciado() {
+        return iniciado;
     }
 }
