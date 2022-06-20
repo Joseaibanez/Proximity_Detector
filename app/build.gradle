@@ -4,6 +4,14 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        release {
+            storeFile file('C:\\Users\\Besitzer\\Desktop\\LocAppKeystore.jks')
+            storePassword '123456'
+            keyAlias 'LocAppKeystore'
+            keyPassword '123456'
+        }
+    }
     compileSdkVersion 31
     buildToolsVersion "30.0.2"
 
@@ -23,6 +31,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {

@@ -8,6 +8,23 @@
     tools:context=".LoginActivity">
 
     <EditText
+        android:id="@+id/passwordLoginText"
+        android:layout_width="234dp"
+        android:layout_height="68dp"
+        android:layout_marginBottom="180dp"
+        android:background="@color/gray"
+        android:hint="@string/passwordLoginText"
+        android:importantForAutofill="no"
+        android:inputType="text"
+        android:textColor="@color/black"
+        android:textColorHint="@color/black"
+        app:layout_constraintBottom_toTopOf="@+id/loginActivityButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.485"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="TextFields" />
+
+    <EditText
         android:id="@+id/idLoginText"
         android:layout_width="229dp"
         android:layout_height="65dp"
@@ -17,43 +34,51 @@
         android:importantForAutofill="no"
         android:inputType="text"
         android:textColor="@color/black"
+        android:textColorHint="@color/black"
         app:layout_constraintBottom_toTopOf="@+id/passwordLoginText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
-    <EditText
-        android:id="@+id/passwordLoginText"
-        android:layout_width="234dp"
-        android:layout_height="68dp"
-        android:layout_marginBottom="76dp"
-        android:background="@color/gray"
-        android:hint="@string/passwordLoginText"
-        android:importantForAutofill="no"
-        android:inputType="text"
-        android:textColor="@color/black"
-        app:layout_constraintBottom_toTopOf="@+id/loginActivityButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.485"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:ignore="TextFields" />
 
     <Button
         android:id="@+id/loginActivityButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="44dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="56dp"
+        android:backgroundTint="@color/gray"
         android:text="@string/loginActivityButtonText"
-        app:layout_constraintBottom_toTopOf="@+id/toRegisterButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:textColor="@color/black"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/toRegisterButton"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:targetApi="lollipop" />
 
     <Button
         android:id="@+id/toRegisterButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
         android:layout_marginBottom="56dp"
+        android:backgroundTint="@color/gray"
         android:text="@string/toRegisterButton"
+        android:textColor="@color/black"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        tools:targetApi="lollipop" />
+
+    <TextView
+        android:id="@+id/loginTitleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="68dp"
+        android:text="@string/loginTitle"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

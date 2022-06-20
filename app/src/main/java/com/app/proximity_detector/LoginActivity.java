@@ -61,18 +61,21 @@ public class LoginActivity extends AppCompatActivity {
                             String passwordDatabase = snapshot.child(id).child("password").getValue(String.class);
                             String username = snapshot.child(id).child("username").getValue(String.class);
                             if(passwordDatabase.equals(password)) {
-                                // Inicio de sesión con el Usuario B
-                                Intent siguiente = new Intent(LoginActivity.this, MapsActivity.class);
-                                siguiente.putExtra("userSelected",false);
-                                siguiente.putExtra("username",username);
-                                siguiente.putExtra("id",id);
-                                siguiente.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-                                        | Intent.FLAG_ACTIVITY_NEW_TASK);
-                                startActivity(siguiente);
-                                Toast.makeText(getApplicationContext(), "Sesión iniciada como un Usuario B", Toast.LENGTH_LONG).show();
-                                rtDatabase.child("usuarios").child("usuariosB").child(id).child("isConnected").setValue(true);
-                                finish();
-                                // Fin
+                                if (!(boolean) snapshot.child(id).child("isConnected").getValue()) {
+                                    // Inicio de sesión con el Usuario B
+                                    Intent siguiente = new Intent(LoginActivity.this, MapsActivity.class);
+                                    siguiente.putExtra("userSelected",false);
+                                    siguiente.putExtra("username",username);
+                                    siguiente.putExtra("id",id);
+                                    siguiente.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                            | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    startActivity(siguiente);
+                                    rtDatabase.child("usuarios").child("usuariosB").child(id).child("isConnected").setValue(true);
+                                    finish();
+                                    // Fin
+                                } else {
+                                    Toast.makeText(getApplicationContext(), "El usuario se encuentra actualmente en uso", Toast.LENGTH_LONG).show();
+                                }
                             } else {
                                 Toast.makeText(getApplicationContext(), "Contraseña incorrecta", Toast.LENGTH_LONG).show();
                             }

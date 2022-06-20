@@ -53,11 +53,11 @@ public class UsuarioA {
     Circle perimetro;
     ArrayList<LatLng> poligono;
     MediaPlayer player;
-    private DatabaseReference rtDatabase;
+    private final DatabaseReference rtDatabase;
     Marker userAMark;
     Polygon polygon1;
 
-    private FusedLocationProviderClient fusedLocationClient;
+    private final FusedLocationProviderClient fusedLocationClient;
     LocationRequest locRequest;
     LocationCallback locCallback;
 
@@ -115,12 +115,14 @@ public class UsuarioA {
     }
 
     public void stopMediaPlayer() {
-        if (player.isPlaying()) {
-            player.stop();
-            try {
-                player.prepare();
-            } catch (IOException e) {
-                e.printStackTrace();
+        if(player != null) {
+            if (player.isPlaying()) {
+                player.stop();
+                try {
+                    player.prepare();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

@@ -12,4 +12,8 @@
     <string name="usuario_bButton">Usuario B</string>
     <string name="identificadorUsuarioB">Identificador</string>
     <string name="idLoginText">Id</string>
+    <string name="desconectar_usuarios">Desconectar Usuarios</string>
+    <string name="userRegisterTitle">Registro de usuarios</string>
+    <string name="loginTitle">Inicio de sesión</string>
+    <string name="deleteUser">Eliminar Usuario</string>
 </resources>
